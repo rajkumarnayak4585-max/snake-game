@@ -1,13 +1,16 @@
-
+ 
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Raj Snake Multiplayer</title>
+<title>RAJ SNAKE ARENA - 4 Players</title>
+
+<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
 <style>
 *{box-sizing:border-box}
+
 body{
  margin:0;
  font-family:Arial,sans-serif;
@@ -17,25 +20,30 @@ body{
  background-size:400% 400%;
  animation:bg 10s ease infinite;
 }
+
 @keyframes bg{
- 0%{background-position:0% 50%}
+ 0%{background-position:0 50%}
  50%{background-position:100% 50%}
- 100%{background-position:0% 50%}
+ 100%{background-position:0 50%}
 }
+
 h1{
- font-size:32px;
- text-shadow:0 0 15px #00ffff;
+ font-size:30px;
+ color:#fff;
+ text-shadow:0 0 15px cyan;
 }
+
 .panel{
- background:#101020dd;
- border:2px solid #00ffff;
+ background:#101020ee;
+ border:2px solid cyan;
  border-radius:15px;
- padding:15px;
- margin:15px auto;
+ padding:14px;
+ margin:14px auto;
+ width:95%;
  max-width:650px;
- width:94%;
  box-shadow:0 0 20px #00ffff55;
 }
+
 input,button{
  padding:12px;
  margin:5px;
@@ -43,36 +51,56 @@ input,button{
  border-radius:8px;
  font-size:15px;
 }
+
 input{width:180px}
+
 button{
  background:linear-gradient(45deg,#00eaff,#00ff77);
- color:#111;
  font-weight:bold;
  cursor:pointer;
 }
-button:hover{transform:scale(1.04)}
-#my-id{color:#00ff9d;font-size:24px}
+
+button:active{transform:scale(.95)}
+
+#my-id{
+ color:#00ff9d;
+ font-size:25px;
+ font-weight:bold;
+}
+
 #status{color:#ffe66d}
+
+.players{
+ display:grid;
+ grid-template-columns:repeat(2,1fr);
+ gap:9px;
+}
+
+.player{
+ background:#202040;
+ padding:10px;
+ border-radius:10px;
+ border:1px solid #555;
+}
+
+.player h3{margin:5px}
+
+.player-score{
+ font-size:25px;
+ font-weight:bold;
+}
+
 canvas{
- width:min(94vw,600px);
+ width:min(94vw,480px);
  height:auto;
  background:#10151d;
- border:3px solid #00ffff;
+ border:3px solid cyan;
  border-radius:12px;
- box-shadow:0 0 25px #00ffff88;
+ box-shadow:0 0 25px cyan;
+ display:block;
+ margin:auto;
 }
-.scores{
- display:flex;
- justify-content:space-around;
- gap:10px;
- flex-wrap:wrap;
-}
-.score{
- background:#202040;
- border-radius:10px;
- padding:12px;
- min-width:120px;
-}
+
 .controls{
  display:grid;
  grid-template-columns:repeat(3,65px);
@@ -80,58 +108,83 @@ canvas{
  gap:7px;
  margin:15px;
 }
-.controls button{font-size:23px;padding:12px}
-#message{color:#ffff00;font-weight:bold}
+
+.controls button{
+ font-size:23px;
+ padding:12px;
+}
+
+#message{
+ color:yellow;
+ font-size:17px;
+ font-weight:bold;
+}
+
+.small{font-size:12px;color:#ccc}
 </style>
 </head>
 
 <body>
 
 <h1>🐍 RAJ SNAKE ARENA</h1>
-<p>2 Player Online Multiplayer Game</p>
+<p>🔥 4 PLAYER ONLINE MULTIPLAYER</p>
 
 <div class="panel">
- <h3>🌐 PLAY WITH YOUR FRIEND</h3>
- <p>Your Room ID:</p>
- <div id="my-id">Connecting...</div>
- <button onclick="copyID()">📋 Copy ID</button>
- <br>
- <input id="join-id" maxlength="6" placeholder="Friend Room ID">
- <button onclick="connectFriend()">Connect & Play</button>
- <p id="status">Connecting to server...</p>
+<h3>🌐 CREATE / JOIN ROOM</h3>
+
+<p>Your Room ID:</p>
+<div id="my-id">Connecting...</div>
+
+<button onclick="copyID()">📋 COPY ROOM ID</button>
+
+<br>
+
+<input id="join-id"
+ maxlength="6"
+ placeholder="Friend Room ID">
+
+<button onclick="connectFriend()">JOIN GAME</button>
+
+<p id="status">Connecting to server...</p>
+<p class="small">Maximum 4 players in one room</p>
 </div>
 
 <div class="panel">
- <div class="scores">
-  <div class="score">
-   🟢 YOU
-   <h2 id="my-score">0</h2>
-  </div>
-  <div class="score">
-   🔴 FRIEND
-   <h2 id="friend-score">0</h2>
-  </div>
- </div>
+<h3>🏆 PLAYER SCORE BOARD</h3>
 
- <canvas id="game" width="600" height="400"></canvas>
- <p id="message">Connect with a friend to play!</p>
- <button onclick="startGame()">▶ START GAME</button>
- <button onclick="resetGame()">🔄 RESTART</button>
-
- <h3>🎮 Controls</h3>
- <div class="controls">
-  <span></span>
-  <button onclick="move('up')">⬆️</button>
-  <span></span>
-  <button onclick="move('left')">⬅️</button>
-  <button onclick="move('down')">⬇️</button>
-  <button onclick="move('right')">➡️</button>
- </div>
+<div class="players" id="players"></div>
 </div>
 
-<p>🌈 Designed by Raj Kumar Nayak</p>
+<div class="panel">
 
-<script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+<h3>🎮 LONG GAME SCREEN</h3>
+
+<canvas id="game" width="600" height="800"></canvas>
+
+<p id="message">Waiting for players...</p>
+
+<button onclick="startGame()">▶ START GAME</button>
+<button onclick="resetGame()">🔄 RESTART</button>
+
+<h3>🎮 MOBILE CONTROLS</h3>
+
+<div class="controls">
+<span></span>
+<button onclick="move('up')">⬆️</button>
+<span></span>
+
+<button onclick="move('left')">⬅️</button>
+<button onclick="move('down')">⬇️</button>
+<button onclick="move('right')">➡️</button>
+</div>
+
+<p class="small">
+Computer: Arrow Keys / WASD
+</p>
+
+</div>
+
+<p>👑 DESIGNED BY RAJ KUMAR NAYAK</p>
 
 <script>
 const canvas=document.getElementById("game");
@@ -139,204 +192,309 @@ const ctx=canvas.getContext("2d");
 
 const SIZE=20;
 const COLS=30;
-const ROWS=20;
-
-let peer;
-let conn=null;
-let isHost=false;
-let gameRunning=false;
-let timer=null;
-let speed=95;
-
-let snake=[
- {x:5,y:5},
- {x:4,y:5},
- {x:3,y:5}
-];
-
-let enemy=[
- {x:20,y:12},
- {x:21,y:12},
- {x:22,y:12}
-];
-
-let direction="right";
-let nextDirection="right";
-let enemyDirection="left";
-
-let food={x:15,y:10};
-let myScore=0;
-let enemyScore=0;
-let gameOver=false;
-let foodNumber=0;
+const ROWS=40;
 
 const COLORS=[
- "#00ff88","#ff00ff","#00d9ff",
- "#ffff00","#ff6600","#ff3366",
- "#a855f7","#ffffff"
+ "#00ff88",
+ "#00d9ff",
+ "#ff4444",
+ "#ffff00"
 ];
+
+const NAMES=[
+ "RAJ",
+ "DEV",
+ "ROHIT",
+ "MAYANK"
+];
+
+let peer;
+let isHost=true;
+let hostConnection=null;
+
+let connections=[];
+let players=[];
+let myPlayer=0;
+
+let running=false;
+let timer=null;
+let food={x:15,y:20};
+
+const SPEED=120;
+
+function makePlayer(id){
+ const positions=[
+  {x:5,y:5,d:"right"},
+  {x:24,y:8,d:"left"},
+  {x:5,y:32,d:"right"},
+  {x:24,y:32,d:"left"}
+ ];
+
+ let p=positions[id];
+
+ return {
+  id:id,
+  name:NAMES[id],
+  color:COLORS[id],
+  snake:[
+   {x:p.x,y:p.y},
+   {x:p.x-1,y:p.y},
+   {x:p.x-2,y:p.y}
+  ],
+  direction:p.d,
+  nextDirection:p.d,
+  score:0,
+  alive:true
+ };
+}
+
+function initialize(){
+ players=[
+  makePlayer(0),
+  makePlayer(1),
+  makePlayer(2),
+  makePlayer(3)
+ ];
+ players=players.slice(0,1);
+}
 
 function randomFood(){
  let p;
+
  do{
   p={
    x:Math.floor(Math.random()*COLS),
    y:Math.floor(Math.random()*ROWS)
   };
- }while(
-  snake.some(s=>s.x===p.x&&s.y===p.y) ||
-  enemy.some(s=>s.x===p.x&&s.y===p.y)
- );
+ }while(players.some(player=>
+  player.snake.some(s=>s.x===p.x&&s.y===p.y)
+ ));
+
  return p;
 }
 
-function sendData(data){
- if(conn && conn.open){
-  conn.send(data);
+function sendToAll(data){
+ connections.forEach(c=>{
+  if(c && c.open)c.send(data);
+ });
+}
+
+function sendToHost(data){
+ if(hostConnection && hostConnection.open){
+  hostConnection.send(data);
  }
 }
 
 function initPeer(){
- const id=String(Math.floor(100000+Math.random()*900000));
+
+ let id=String(
+  Math.floor(100000+Math.random()*900000)
+ );
+
  peer=new Peer(id);
 
  peer.on("open",id=>{
   document.getElementById("my-id").innerText=id;
-  document.getElementById("status").innerText="Ready! Share your ID.";
+  document.getElementById("status").innerText=
+   "🟢 Room Ready! Share your ID.";
  });
 
- peer.on("connection",connection=>{
-  if(conn){
-   connection.close();
+ peer.on("connection",conn=>{
+
+  if(players.length>=4){
+   conn.on("open",()=>{
+    conn.send({type:"full"});
+    conn.close();
+   });
    return;
   }
-  conn=connection;
-  isHost=true;
-  setupConnection();
+
+  connections.push(conn);
+
+  conn.on("open",()=>{
+
+   const newId=players.length;
+
+   players.push(makePlayer(newId));
+
+   conn.send({
+    type:"welcome",
+    playerId:newId,
+    players:players,
+    food:food,
+    running:running
+   });
+
+   sendToAll({
+    type:"state",
+    players:players,
+    food:food
+   });
+
+   updateUI();
+   document.getElementById("status").innerText=
+    "🟢 "+players.length+" Players Connected";
+  });
+
+  conn.on("data",data=>{
+   if(data.type==="direction"){
+    const p=players[data.playerId];
+
+    if(p && p.alive){
+     p.nextDirection=data.direction;
+    }
+   }
+
+   if(data.type==="start" && !running){
+    startGame();
+   }
+
+   if(data.type==="restart"){
+    resetGame();
+   }
+  });
+
+  conn.on("close",()=>{
+   connections=connections.filter(c=>c!==conn);
+   document.getElementById("status").innerText=
+    "A player disconnected";
+  });
+
  });
 
  peer.on("error",err=>{
-  if(err.type==="unavailable-id"){
-   initPeer();
-  }else{
-   document.getElementById("status").innerText=
-    "Connection error: "+err.type;
-  }
+  document.getElementById("status").innerText=
+   "Connection error: "+err.type;
  });
 }
 
 function connectFriend(){
+
  const id=document.getElementById("join-id").value.trim();
 
  if(!/^\d{6}$/.test(id)){
-  alert("Enter a valid 6-digit Room ID!");
+  alert("Enter valid 6 digit Room ID");
   return;
  }
+
  if(id===document.getElementById("my-id").innerText){
-  alert("You cannot join your own room!");
-  return;
- }
- if(conn){
-  alert("Already connected!");
+  alert("You cannot join your own room");
   return;
  }
 
- conn=peer.connect(id);
+ if(hostConnection){
+  alert("Already connected");
+  return;
+ }
+
  isHost=false;
- setupConnection();
-}
 
-function setupConnection(){
- document.getElementById("status").innerText="Connecting...";
+ hostConnection=peer.connect(id);
 
- conn.on("open",()=>{
-  document.getElementById("status").innerText="🟢 Friend Connected!";
-  document.getElementById("message").innerText="Both players ready!";
+ document.getElementById("status").innerText=
+  "Connecting to host...";
 
-  if(isHost){
-   sendData({
-    type:"initial",
-    food,
-    snake,
-    score:myScore
-   });
-  }else{
-   sendData({type:"request"});
-  }
+ hostConnection.on("open",()=>{
+  document.getElementById("status").innerText=
+   "🟢 Connected to Room!";
  });
 
- conn.on("data",data=>{
-  if(data.type==="initial" && !isHost){
+ hostConnection.on("data",data=>{
+
+  if(data.type==="full"){
+   alert("Room is full! Maximum 4 players.");
+   hostConnection.close();
+   return;
+  }
+
+  if(data.type==="welcome"){
+   myPlayer=data.playerId;
+   players=data.players;
    food=data.food;
-   enemy=data.snake;
-   enemyScore=data.score||0;
+
+   document.getElementById("status").innerText=
+    "Connected as "+NAMES[myPlayer];
+
+   updateUI();
    draw();
   }
 
   if(data.type==="state"){
-   enemy=data.snake;
-   enemyScore=data.score;
-   document.getElementById("friend-score").innerText=enemyScore;
+   players=data.players;
+   food=data.food;
+   updateUI();
    draw();
   }
 
-  if(data.type==="eat" && isHost){
-   food=randomFood();
-   foodNumber++;
-   sendData({type:"food",food,foodNumber});
+  if(data.type==="gameover"){
+   running=false;
+   document.getElementById("message").innerText=
+    data.message;
+   draw();
   }
 
-  if(data.type==="food"){
-   food=data.food;
-   foodNumber=data.foodNumber;
+  if(data.type==="start"){
+   running=true;
+   document.getElementById("message").innerText=
+    "🔥 GAME STARTED!";
   }
 
-  if(data.type==="request" && isHost){
-   sendData({
-    type:"initial",
-    food,
-    snake,
-    score:myScore
-   });
-  }
-
-  if(data.type==="restart"){
-   resetGame(false);
-  }
  });
 
- conn.on("close",()=>{
-  document.getElementById("status").innerText="🔴 Friend Disconnected";
-  conn=null;
-  gameRunning=false;
-  clearInterval(timer);
+ hostConnection.on("close",()=>{
+  document.getElementById("status").innerText=
+   "🔴 Host disconnected";
  });
 }
 
 function copyID(){
  const id=document.getElementById("my-id").innerText;
- if(id!=="Connecting..."){
-  navigator.clipboard.writeText(id);
-  alert("Room ID copied!");
- }
+
+ if(id==="Connecting...")return;
+
+ navigator.clipboard.writeText(id)
+ .then(()=>alert("Room ID copied!"))
+ .catch(()=>alert("Copy this ID: "+id));
 }
 
 function move(d){
+
+ const p=players[myPlayer];
+ if(!p)return;
+
  const opposite={
-  up:"down",down:"up",
-  left:"right",right:"left"
+  up:"down",
+  down:"up",
+  left:"right",
+  right:"left"
  };
- if(opposite[d]!==direction){
-  nextDirection=d;
+
+ if(opposite[d]===p.direction)return;
+
+ if(isHost){
+  p.nextDirection=d;
+ }else{
+  sendToHost({
+   type:"direction",
+   playerId:myPlayer,
+   direction:d
+  });
  }
 }
 
 document.addEventListener("keydown",e=>{
+
  const keys={
-  ArrowUp:"up",ArrowDown:"down",
-  ArrowLeft:"left",ArrowRight:"right",
-  w:"up",s:"down",a:"left",d:"right"
+  ArrowUp:"up",
+  ArrowDown:"down",
+  ArrowLeft:"left",
+  ArrowRight:"right",
+  w:"up",
+  s:"down",
+  a:"left",
+  d:"right"
  };
+
  if(keys[e.key]){
   e.preventDefault();
   move(keys[e.key]);
@@ -344,104 +502,176 @@ document.addEventListener("keydown",e=>{
 });
 
 function startGame(){
- if(!conn || !conn.open){
-  document.getElementById("message").innerText=
-   "First connect with your friend!";
+
+ if(!isHost){
+  if(hostConnection){
+   sendToHost({type:"start"});
+  }
   return;
  }
- if(gameRunning)return;
 
- gameRunning=true;
- gameOver=false;
- document.getElementById("message").innerText="🔥 GAME STARTED!";
- timer=setInterval(update,speed);
+ if(running)return;
+
+ if(players.length<2){
+  document.getElementById("message").innerText=
+   "Connect at least one friend first!";
+  return;
+ }
+
+ running=true;
+
+ document.getElementById("message").innerText=
+  "🔥 GAME STARTED!";
+
+ sendToAll({type:"start"});
+
+ timer=setInterval(update,SPEED);
 }
 
-function resetGame(send=true){
- clearInterval(timer);
- gameRunning=false;
- gameOver=false;
+function resetGame(){
 
- snake=[
-  {x:5,y:5},{x:4,y:5},{x:3,y:5}
- ];
- enemy=[
-  {x:20,y:12},{x:21,y:12},{x:22,y:12}
- ];
- direction="right";
- nextDirection="right";
- enemyDirection="left";
- myScore=0;
- enemyScore=0;
+ if(!isHost){
+  sendToHost({type:"restart"});
+  return;
+ }
+
+ clearInterval(timer);
+ running=false;
+
+ players=players.map((p,i)=>makePlayer(i));
+
  food=randomFood();
 
- document.getElementById("my-score").innerText=0;
- document.getElementById("friend-score").innerText=0;
- document.getElementById("message").innerText="Ready to play!";
+ document.getElementById("message").innerText=
+  "Ready! Press START GAME";
 
- if(send)sendData({type:"restart"});
+ updateUI();
  draw();
+
+ sendToAll({
+  type:"state",
+  players:players,
+  food:food
+ });
 }
 
 function update(){
- if(!gameRunning)return;
 
- direction=nextDirection;
+ if(!running)return;
 
- let head={...snake[0]};
+ players.forEach(p=>{
 
- if(direction==="up")head.y--;
- if(direction==="down")head.y++;
- if(direction==="left")head.x--;
- if(direction==="right")head.x++;
+  if(!p.alive)return;
 
- if(head.x<0 || head.x>=COLS ||
-    head.y<0 || head.y>=ROWS ||
-    snake.some((s,i)=>i>0&&s.x===head.x&&s.y===head.y)){
-  endGame("You crashed! Friend wins!");
-  return;
- }
+  p.direction=p.nextDirection;
 
- snake.unshift(head);
+  let head={...p.snake[0]};
 
- if(head.x===food.x && head.y===food.y){
-  myScore+=10;
-  document.getElementById("my-score").innerText=myScore;
+  if(p.direction==="up")head.y--;
+  if(p.direction==="down")head.y++;
+  if(p.direction==="left")head.x--;
+  if(p.direction==="right")head.x++;
 
-  if(isHost){
-   food=randomFood();
-   foodNumber++;
-   sendData({type:"food",food,foodNumber});
-  }else{
-   sendData({type:"eat"});
+  let crashed=
+   head.x<0 || head.x>=COLS ||
+   head.y<0 || head.y>=ROWS;
+
+  if(!crashed){
+
+   crashed=p.snake.some((s,i)=>
+    i>0 && s.x===head.x && s.y===head.y
+   );
+
+   if(!crashed){
+    crashed=players.some(other=>
+     other.snake.some(s=>
+      s.x===head.x && s.y===head.y
+     )
+    );
+   }
   }
- }else{
-  snake.pop();
+
+  if(crashed){
+   p.alive=false;
+   return;
+  }
+
+  p.snake.unshift(head);
+
+  if(head.x===food.x && head.y===food.y){
+   p.score+=10;
+   food=randomFood();
+  }else{
+   p.snake.pop();
+  }
+
+ });
+
+ const alive=players.filter(p=>p.alive);
+
+ if(alive.length<=1){
+  running=false;
+  clearInterval(timer);
+
+  let winner=alive[0];
+
+  let msg=winner?
+   "🏆 WINNER: "+winner.name:
+   "GAME OVER!";
+
+  document.getElementById("message").innerText=msg;
+
+  sendToAll({
+   type:"gameover",
+   message:msg
+  });
  }
 
- sendData({
+ updateUI();
+
+ sendToAll({
   type:"state",
-  snake,
-  score:myScore
+  players:players,
+  food:food
  });
 
  draw();
 }
 
-function endGame(msg){
- gameRunning=false;
- gameOver=true;
- clearInterval(timer);
- document.getElementById("message").innerText="🏆 "+msg;
+function updateUI(){
+
+ const box=document.getElementById("players");
+
+ box.innerHTML="";
+
+ NAMES.forEach((name,i)=>{
+
+  const p=players[i];
+
+  let score=p?p.score:0;
+  let status=p?(p.alive?"🟢 Playing":"❌ Out"):"⚪ Waiting";
+
+  box.innerHTML+=`
+   <div class="player" style="border-color:${COLORS[i]}">
+    <h3 style="color:${COLORS[i]}">${name}</h3>
+    <div class="player-score">${score}</div>
+    <small>${status}</small>
+   </div>
+  `;
+ });
+
 }
 
 function draw(){
- ctx.clearRect(0,0,canvas.width,canvas.height);
 
- // Colourful grid
+ ctx.clearRect(0,0,600,800);
+
+ // Background grid
  for(let y=0;y<ROWS;y++){
   for(let x=0;x<COLS;x++){
-   ctx.fillStyle=(x+y)%2===0?"#182333":"#202b3b";
+   ctx.fillStyle=(x+y)%2===0?
+    "#182333":"#202b3b";
+
    ctx.fillRect(x*SIZE,y*SIZE,SIZE,SIZE);
   }
  }
@@ -450,32 +680,53 @@ function draw(){
  ctx.fillStyle="#ff3030";
  ctx.shadowColor="#ff0000";
  ctx.shadowBlur=15;
+
  ctx.beginPath();
- ctx.arc(food.x*SIZE+10,food.y*SIZE+10,8,0,Math.PI*2);
+ ctx.arc(
+  food.x*SIZE+10,
+  food.y*SIZE+10,
+  8,0,Math.PI*2
+ );
  ctx.fill();
+
  ctx.shadowBlur=0;
 
- // My snake
- snake.forEach((s,i)=>{
-  ctx.fillStyle=COLORS[i%COLORS.length];
-  ctx.fillRect(s.x*SIZE+1,s.y*SIZE+1,18,18);
+ // All snakes
+ players.forEach(p=>{
+
+  p.snake.forEach((s,i)=>{
+
+   ctx.fillStyle=p.alive?p.color:"#555";
+
+   ctx.fillRect(
+    s.x*SIZE+1,
+    s.y*SIZE+1,
+    18,18
+   );
+
+   if(i===0){
+    ctx.fillStyle="white";
+    ctx.font="bold 11px Arial";
+    ctx.fillText(
+     p.name,
+     s.x*SIZE-2,
+     s.y*SIZE-5
+    );
+   }
+
+  });
+
  });
 
- // Friend snake
- enemy.forEach((s,i)=>{
-  ctx.fillStyle=i===0?"#ff4444":"#ff8800";
-  ctx.fillRect(s.x*SIZE+1,s.y*SIZE+1,18,18);
- });
-
- // Player labels
- ctx.font="12px Arial";
- ctx.fillStyle="white";
- if(snake.length)ctx.fillText("YOU",snake[0].x*SIZE,snake[0].y*SIZE-5);
- if(enemy.length)ctx.fillText("FRIEND",enemy[0].x*SIZE,enemy[0].y*SIZE-5);
 }
 
+initialize();
+food=randomFood();
+
+updateUI();
 draw();
 initPeer();
+
 </script>
 
 </body>
